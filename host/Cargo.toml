@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 csv = "1.2.2"
 error = "0.1.9"
+instant = "0.1.12"
 methods = { path = "../methods" }
 risc0-zkvm = { version = "0.18.0" }
 serde = "1.0"

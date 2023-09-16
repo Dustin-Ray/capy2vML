@@ -6,6 +6,7 @@ use methods::{METHOD_NAME_ELF, METHOD_NAME_ID};
 use risc0_zkvm::{default_prover, serde::from_slice, ExecutorEnv};
 use std::error::Error;
 use std::fs::File;
+use std::time::Instant;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let file_path = "age_vs_insurance_costs.csv"; // Replace with the path to your CSV file
@@ -30,15 +31,28 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Obtain the default prover.
     let prover = default_prover();
 
+    // Start the timer
+    let start_time = Instant::now();
     // Produce a receipt by proving the specified ELF binary.
-    let receipt = prover.prove_elf(env, METHOD_NAME_ELF).unwrap();
+    let receipt = prover.prove_elf(env, METHOD_NAME_ELF).unwrap();    
+    let end_time = Instant::now();
+
+    // Calculate the elapsed time in seconds
+    let elapsed_time = end_time.duration_since(start_time).as_secs_f64();
+    println!("Elapsed proving time: {} seconds", elapsed_time);
 
     // TODO: Implement code for transmitting or serializing the receipt for
     // other parties to verify here
 
+    let start_time = Instant::now();
     // Optional: Verify receipt to confirm that recipients will also be able to
     // verify your receipt
     receipt.verify(METHOD_NAME_ID).unwrap();
+    let end_time = Instant::now();
+
+    // Calculate the elapsed time in seconds
+    let elapsed_time = end_time.duration_since(start_time).as_secs_f64();
+    println!("Elapsed verification time: {} seconds", elapsed_time);
 
     let _c: Vec<f32> = from_slice(&receipt.journal).expect(
         "Journal output should deserialize into the same types (& order) that it was written",
@@ -66,6 +80,6 @@ fn read_csv_file(file_path: &str) -> Result<(Vec<f64>, Vec<f64>), Box<dyn Error>
         }
     }
     println!("X values len: {:?}", x_values.len());
-    println!("Y valueslen : {:?}", y_values.len());
+    println!("Y values len: {:?}", y_values.len());
     Ok((x_values, y_values))
 }

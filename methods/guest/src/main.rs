@@ -94,6 +94,7 @@ fn powf(x: f32, n: f32) -> f32 {
 
 pub fn main() {
     let mut lr = LinearRegression::new();
+    //assumes a single column stream of interleaved data i.e. (x,y,x,y...etc)
     let training_data = (0..1200).map(|_| (env::read(), env::read()));
     training_data.for_each(|(x, y)| lr.train(x, y));
     env::commit(&(lr.intercept, lr.slope));
