@@ -1,6 +1,6 @@
 #![no_main]
 // If you want to try std support, also update the guest Cargo.toml file
-#![no_std]  // std support is experimental
+#![no_std] // std support is experimental
 
 extern crate alloc;
 use risc0_zkvm::guest::env;
@@ -49,7 +49,6 @@ impl LinearRegression {
     // fn predict(&self, x: f32) -> f32 {
     //     self.slope * x + self.intercept
     // }
-
 }
 
 fn laplace_noise(x: f32, b: f32) -> f32 {
@@ -64,7 +63,7 @@ fn laplace_mechanism(epsilon: f32, n: f32, alpha: f32) -> f32 {
     laplace_noise(0.0, 3.0 * delta_3 / epsilon)
 }
 
-fn abs(x: f32) -> f32{
+fn abs(x: f32) -> f32 {
     let result = match x {
         n if n < 0.0 => -n,
         _ => x,
@@ -73,8 +72,12 @@ fn abs(x: f32) -> f32{
 }
 
 fn powf(x: f32, n: f32) -> f32 {
-    if n == 0.0 { return 1.0; }
-    if n < 0.0 { return 1.0 / powf(x, -n); }
+    if n == 0.0 {
+        return 1.0;
+    }
+    if n < 0.0 {
+        return 1.0 / powf(x, -n);
+    }
 
     let mut result = 1.0;
     let mut base = x;

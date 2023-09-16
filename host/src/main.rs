@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Start the timer
     let start_time = Instant::now();
     // Produce a receipt by proving the specified ELF binary.
-    let receipt = prover.prove_elf(env, METHOD_NAME_ELF).unwrap();    
+    let receipt = prover.prove_elf(env, METHOD_NAME_ELF).unwrap();
     let end_time = Instant::now();
 
     // Calculate the elapsed time in seconds
