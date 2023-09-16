@@ -4,7 +4,6 @@
 
 extern crate alloc;
 use risc0_zkvm::guest::env;
-
 risc0_zkvm::guest::entry!(main);
 
 struct LinearRegression {
@@ -90,7 +89,6 @@ fn powf(x: f32, n: f32) -> f32 {
     }
     result
 }
-
 
 pub fn main() {
     let mut lr = LinearRegression::new();
