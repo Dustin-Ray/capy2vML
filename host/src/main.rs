@@ -5,8 +5,16 @@ use methods::{METHOD_NAME_ELF, METHOD_NAME_ID};
 use risc0_zkvm::{default_prover, ExecutorEnv};
 
 fn main() {
-    // First, we construct an executor environment
-    let env = ExecutorEnv::builder().build().unwrap();
+
+    let file_path = "age_vs_insurance_costs.csv"; // Replace with the path to your CSV file
+    let (x, y) = read_csv_file(file_path)?;
+
+    let env = ExecutorEnv::builder()
+        // Send a & b to the guest
+        .add_input(&x)
+        .add_input(&y)
+        .build()
+        .unwrap();
 
     // TODO: add guest input to the executor environment using
     // ExecutorEnvBuilder::add_input().

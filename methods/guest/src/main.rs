@@ -47,17 +47,10 @@ impl LinearRegression {
             - laplace_mechanism(2.0, 1200.0, self.slope);
     }
 
-    fn predict(&self, x: f32) -> f32 {
-        self.slope * x + self.intercept
-    }
+    // fn predict(&self, x: f32) -> f32 {
+    //     self.slope * x + self.intercept
+    // }
 
-    fn get_slope(&self) -> f32 {
-        self.slope
-    }
-
-    fn get_intercept(&self) -> f32 {
-        self.intercept
-    }
 }
 
 fn laplace_noise(x: f32, b: f32) -> f32 {
@@ -70,24 +63,6 @@ fn laplace_mechanism(epsilon: f32, n: f32, alpha: f32) -> f32 {
     let l = laplace_noise(0.0, (3.0 * delta) / epsilon);
     let delta_3 = (1.0 / n) * (1.0 + (abs(alpha) + l));
     laplace_noise(0.0, 3.0 * delta_3 / epsilon)
-}
-
-// Get variance and covariance of two vectors
-fn get_cov_and_var(x: &Vec<f32>, y: &[f32], l: f32) -> Option<f32> {
-    let cov_xy = x
-        .iter()
-        .zip(y.iter())
-        .fold(0.0, |acc, (xi, yi)| acc + xi * yi)
-        / (x.len() as f32)
-        + l;
-    let var_x = x.iter().fold(0.0, |acc, xi| acc + xi * xi) / (x.len() as f32) + l;
-
-    if var_x != 0.0 {
-        let ratio = cov_xy / var_x;
-        Some(ratio)
-    } else {
-        None
-    }
 }
 
 fn abs(x: f32) -> f32{
@@ -120,7 +95,6 @@ fn powf(x: f32, n: f32) -> f32 {
         base *= base;
         exponent /= 2.0;
     }
-
     result
 }
 
