@@ -3,7 +3,6 @@
 #![no_std]  // std support is experimental
 
 extern crate alloc;
-use alloc::vec::Vec;
 use risc0_zkvm::guest::env;
 
 risc0_zkvm::guest::entry!(main);
@@ -43,6 +42,7 @@ impl LinearRegression {
             / (self.n as f32 * self.sum_x_squared - self.sum_x * self.sum_x);
 
         // β = ( ̃y −  ̃α ̃x) + L3
+        // NoisyStats algorithm
         self.intercept = (self.sum_y - self.slope * self.sum_x) / self.n as f32
             - laplace_mechanism(2.0, 1200.0, self.slope);
     }
@@ -66,7 +66,6 @@ fn laplace_mechanism(epsilon: f32, n: f32, alpha: f32) -> f32 {
 }
 
 fn abs(x: f32) -> f32{
-
     let result = match x {
         n if n < 0.0 => -n,
         _ => x,
@@ -75,13 +74,8 @@ fn abs(x: f32) -> f32{
 }
 
 fn powf(x: f32, n: f32) -> f32 {
-    if n == 0.0 {
-        return 1.0;
-    }
-
-    if n < 0.0 {
-        return 1.0 / powf(x, -n);
-    }
+    if n == 0.0 { return 1.0; }
+    if n < 0.0 { return 1.0 / powf(x, -n); }
 
     let mut result = 1.0;
     let mut base = x;
@@ -91,7 +85,6 @@ fn powf(x: f32, n: f32) -> f32 {
         if exponent % 2.0 == 1.0 {
             result *= base;
         }
-
         base *= base;
         exponent /= 2.0;
     }
@@ -100,25 +93,8 @@ fn powf(x: f32, n: f32) -> f32 {
 
 
 pub fn main() {
-
-    let mut x_vec = Vec::new();
-    let mut y_vec = Vec::new();
-
     let mut lr = LinearRegression::new();
-
-    for _ in 0..1200 {
-        let x: f32 = env::read();
-        x_vec.push(x);
-    }
-
-    for _ in 0..1200 {
-        let y: f32 = env::read();
-        y_vec.push(y);
-    }
-
-    for i in 0..1200 {
-        lr.train(x_vec[i], y_vec[i])
-    }
-
+    let training_data = (0..1200).map(|_| (env::read(), env::read()));
+    training_data.for_each(|(x, y)| lr.train(x, y));
     env::commit(&(lr.intercept, lr.slope));
 }
