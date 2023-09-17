@@ -41,9 +41,9 @@ impl LinearRegression {
             / (self.n as f32 * self.sum_x_squared - self.sum_x * self.sum_x);
 
         // β = ( ̃y −  ̃α ̃x) + L3
-        // NoisyStats algorithm
+        // NoisyStats for DP Model
         self.intercept = (self.sum_y - self.slope * self.sum_x) / self.n as f32
-            - laplace_mechanism(2.0, 1200.0, self.slope);
+            + laplace_mechanism(2.0, self.n as f32, self.slope);
     }
 
     // fn predict(&self, x: f32) -> f32 {
@@ -71,32 +71,50 @@ fn abs(x: f32) -> f32 {
     result
 }
 
-fn powf(x: f32, n: f32) -> f32 {
-    if n == 0.0 {
+fn powf(x: f32, y: f32) -> f32 {
+    if y == 0.0 {
+        // Anything raised to the power of 0 is 1
         return 1.0;
-    }
-    if n < 0.0 {
-        return 1.0 / powf(x, -n);
+    } else if y == 1.0 {
+        // Anything raised to the power of 1 is itself
+        return x;
+    } else if y.is_infinite() {
+        // Handle infinite y
+        return if x == 1.0 { 1.0 } else { 0.0 };
+    } else if x == 0.0 {
+        // Handle x == 0
+        return 0.0;
     }
 
     let mut result = 1.0;
-    let mut base = x;
-    let mut exponent = n;
+    let mut exp = abs(y) as u32;
 
-    while exponent > 0.0 {
-        if exponent % 2.0 == 1.0 {
+    let mut base = x;
+
+    while exp > 0 {
+        if exp % 2 == 1 {
+            // If exp is odd, multiply the result by the base
             result *= base;
         }
+        // Square the base and halve the exponent
         base *= base;
-        exponent /= 2.0;
+        exp /= 2;
     }
+
+    if y < 0.0 {
+        // If y is negative, take the reciprocal of the result
+        result = 1.0 / result;
+    }
+
     result
 }
 
 pub fn main() {
     let mut lr = LinearRegression::new();
-    //assumes a single column stream of interleaved data i.e. (x,y,x,y...etc)
+    //assumes a single column stream of interleaved data i.e. (x,y,x,y...etc), 1200 is length of data
     let training_data = (0..1200).map(|_| (env::read(), env::read()));
     training_data.for_each(|(x, y)| lr.train(x, y));
-    env::commit(&(lr.intercept, lr.slope));
+    let cycles = env::get_cycle_count();
+    let result = (lr.intercept, lr.slope, cycles);
+    env::commit(&(result));
 }

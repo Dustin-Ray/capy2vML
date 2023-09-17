@@ -3,7 +3,8 @@
 // `METHOD_NAME_ID` with `MULTIPLY_ID`
 use csv::ReaderBuilder;
 use methods::{METHOD_NAME_ELF, METHOD_NAME_ID};
-use risc0_zkvm::{default_prover, serde::from_slice, ExecutorEnv};
+use risc0_zkvm::serde::from_slice;
+use risc0_zkvm::{default_prover, ExecutorEnv};
 use std::error::Error;
 use std::fs::File;
 use std::time::Instant;
@@ -11,6 +12,7 @@ use std::time::Instant;
 fn main() -> Result<(), Box<dyn Error>> {
     let file_path = "age_vs_insurance_costs.csv"; // Replace with the path to your CSV file
     let (x, y) = read_csv_file(file_path)?;
+    let interleaved = interleave_vectors(&x, &y);
 
     // TODO: add guest input to the executor environment using
     // ExecutorEnvBuilder::add_input().
@@ -20,8 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let env = ExecutorEnv::builder()
         // Send a & b to the guest
-        .add_input(&x)
-        .add_input(&y)
+        .add_input(&interleaved)
         .build()
         .unwrap();
 
@@ -47,19 +48,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     let start_time = Instant::now();
     // Optional: Verify receipt to confirm that recipients will also be able to
     // verify your receipt
-    receipt.verify(METHOD_NAME_ID).unwrap();
+    receipt.verify(METHOD_NAME_ID).expect(
+        "Check Image ID?",
+    );
     let end_time = Instant::now();
+
+    // Extract journal of receipt (i.e. output c, where c = a * b)
+    let c: (f32, f32, usize) = from_slice(&receipt.journal).expect(
+        "Journal output should deserialize into the same types (& order) that it was written",
+    );
+
 
     // Calculate the elapsed time in seconds
     let elapsed_time = end_time.duration_since(start_time).as_secs_f64();
     println!("Elapsed verification time: {} seconds", elapsed_time);
-
-    let _c: Vec<f32> = from_slice(&receipt.journal).expect(
-        "Journal output should deserialize into the same types (& order) that it was written",
-    );
-
+    println!("slope: {:.4}", c.0);
+    println!("intercept: {:.4}", c.1);
+    println!("cycles: {:?}", c.2);
     Ok(())
+
 }
+
 
 fn read_csv_file(file_path: &str) -> Result<(Vec<f64>, Vec<f64>), Box<dyn Error>> {
     let mut x_values = Vec::new();
@@ -79,7 +88,39 @@ fn read_csv_file(file_path: &str) -> Result<(Vec<f64>, Vec<f64>), Box<dyn Error>
             }
         }
     }
-    println!("X values len: {:?}", x_values.len());
-    println!("Y values len: {:?}", y_values.len());
+    println!("X values length: {:?}", x_values.len());
+    println!("Y values length: {:?}", y_values.len());
     Ok((x_values, y_values))
+}
+
+fn interleave_vectors<T: Clone>(x: &[T], y: &[T]) -> Vec<T> {
+    let mut result = Vec::with_capacity(x.len() + y.len());
+    let mut iter_x = x.iter();
+    let mut iter_y = y.iter();
+
+    loop {
+        match (iter_x.next(), iter_y.next()) {
+            (Some(a), Some(b)) => {
+                result.push(a.clone());
+                result.push(b.clone());
+            }
+            (None, None) => break,
+            (Some(a), None) => {
+                result.push(a.clone());
+                while let Some(a) = iter_x.next() {
+                    result.push(a.clone());
+                }
+                break;
+            }
+            (None, Some(b)) => {
+                result.push(b.clone());
+                while let Some(b) = iter_y.next() {
+                    result.push(b.clone());
+                }
+                break;
+            }
+        }
+    }
+    println!("interleaved values length: {:?}", result.len());
+    result
 }
