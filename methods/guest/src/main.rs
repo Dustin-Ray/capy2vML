@@ -41,13 +41,12 @@ impl LinearRegression {
         self.sum_xy += x * y;
 
         // Calculate the slope and intercept using the least squares method
-        self.slope = (self.n as f32 * self.sum_xy - self.sum_x * self.sum_y)
-            / (self.n as f32 * self.sum_x_squared - self.sum_x * self.sum_x);
+        self.slope = (self.n as f32 * self.sum_xy - self.sum_x * self.sum_y) + laplace_mechanism(2.0, self.n as f32, self.slope)
+            / (self.n as f32 * self.sum_x_squared - self.sum_x * self.sum_x) + laplace_mechanism(2.0, self.n as f32, self.slope);
 
         // β = ( ̃y −  ̃α ̃x) + L3
         // NoisyStats for DP Model
-        self.intercept = (self.sum_y - self.slope * self.sum_x) / self.n as f32
-            + laplace_mechanism(2.0, self.n as f32, self.slope);
+        self.intercept = (self.sum_y - self.slope * self.sum_x) / self.n as f32 + laplace_mechanism(2.0, self.n as f32, self.slope);
     }
 
     // fn predict(&self, x: f32) -> f32 {

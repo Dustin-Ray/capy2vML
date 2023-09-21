@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bytemuck = "1.14.0"
 csv = "1.2.2"
 error = "0.1.9"
 instant = "0.1.12"
