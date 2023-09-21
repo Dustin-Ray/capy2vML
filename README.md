@@ -16,6 +16,11 @@ cargo run --release
 
 It processes the dataset into a vector, initializes the prover/guest, and commits the dataset to the guest environment. Following training, a "receipt" is produced which verifies the integrity of the computation. The receipt is zero-knowledge, and together with the differentially-private model, nothing is revealed about the training data.
 
+DP Training Converges to Expected Model:
+
+![dp_training](./img/dp_training.gif)
+
+
 ## RISC-Zero Starter Template
 [main repository](http://www.github.com/risc0)
 

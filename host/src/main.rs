@@ -23,14 +23,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let receipt = prover.prove_elf(env, METHOD_NAME_ELF).unwrap();
     let end_time = Instant::now();
 
-
     let elapsed_time = end_time.duration_since(start_time).as_secs_f32();
     println!("Elapsed proving time: {} seconds", elapsed_time);
 
     let start_time = Instant::now();
-    receipt.verify(METHOD_NAME_ID).expect(
-        "Check Image ID?",
-    );
+    receipt.verify(METHOD_NAME_ID).expect("Check Image ID?");
     let end_time = Instant::now();
     let c: (f32, f32, usize) = from_slice(&receipt.journal).expect(
         "Journal output should deserialize into the same types (& order) that it was written",
@@ -42,9 +39,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("intercept: {:.4}", c.1);
     println!("cycles: {:?}", c.2);
     Ok(())
-
 }
-
 
 /// Opens a csv file with two columns and returns a tuple of Vec<f32>
 fn read_csv_file(file_path: &str) -> Result<(Vec<f32>, Vec<f32>), Box<dyn Error>> {

@@ -41,8 +41,8 @@ impl LinearRegression {
         self.sum_xy += x * y;
 
         // Calculate the slope and intercept using the least squares method
-        self.slope = (self.n as f32 * self.sum_xy - self.sum_x * self.sum_y) + laplace_mechanism(2.0, self.n as f32, self.slope)
-            / (self.n as f32 * self.sum_x_squared - self.sum_x * self.sum_x) + laplace_mechanism(2.0, self.n as f32, self.slope);
+        self.slope = (self.n as f32 * self.sum_xy - self.sum_x * self.sum_y) + laplace_mechanism(2.0, self.n as f32, self.slope) as f32
+            / (self.n as f32 * self.sum_x_squared - self.sum_x * self.sum_x) + laplace_mechanism(2.0, self.n as f32, self.slope) as f32;
 
         // β = ( ̃y −  ̃α ̃x) + L3
         // NoisyStats for DP Model
@@ -113,9 +113,9 @@ fn powf(x: f32, n: f32) -> f32 {
 pub fn main() {
     let mut lr = LinearRegression::new();
     //assumes a single column stream of interleaved data i.e. (x,y,x,y...etc), 1200 is length of data
-    let training_data = (0..1199).map(|_| (env::read(), env::read()));
+    let training_data = (0..12).map(|_| (env::read(), env::read()));
     training_data.for_each(|(x, y)| lr.train(x, y));
     let cycles = env::get_cycle_count();
-    let result = (lr.intercept, lr.slope, cycles);
+    let result = (lr.slope, lr.intercept, cycles);
     env::commit(&(result));
 }
