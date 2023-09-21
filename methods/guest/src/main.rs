@@ -6,9 +6,11 @@ extern crate alloc;
 use risc0_zkvm::guest::env;
 risc0_zkvm::guest::entry!(main);
 
+/// Linear regression fits a line to a dataset such that OLS
+/// is minimized.
 struct LinearRegression {
     slope: f32,
-    intercept: f32,
+    intercept: f32, 
     n: usize,
     sum_x: f32,
     sum_y: f32,
@@ -29,6 +31,8 @@ impl LinearRegression {
         }
     }
 
+    /// Trains the regression one coordinate pair at a time,
+    /// accumulating the values in the struct fields
     fn train(&mut self, x: f32, y: f32) {
         self.n += 1;
         self.sum_x += x;
@@ -51,11 +55,22 @@ impl LinearRegression {
     // }
 }
 
+/// Forms a laplace distribution
+/// ## Arguments:
+/// * x: mean of distribution
+/// * b: location paramter of distribution
 fn laplace_noise(x: f32, b: f32) -> f32 {
     let exponent = abs(x / b);
     (1.0 / 2.0 * b) * powf(2.7182817_f32, -exponent)
 }
 
+/// Additive noise mechanism using laplace distribution
+/// ## Arguments:
+/// * epsilon: privacy paramter of mechanism, a good default value is 2
+/// * n: size of dataset
+/// * alpha: slope of regression to perturb
+/// ## Returns:
+/// * perturbed additive noise value
 fn laplace_mechanism(epsilon: f32, n: f32, alpha: f32) -> f32 {
     let delta = 1.0 - (1.0 / n);
     let l = laplace_noise(0.0, (3.0 * delta) / epsilon);
@@ -63,6 +78,7 @@ fn laplace_mechanism(epsilon: f32, n: f32, alpha: f32) -> f32 {
     laplace_noise(0.0, 3.0 * delta_3 / epsilon)
 }
 
+/// Calculates |x|
 fn abs(x: f32) -> f32 {
     let result = match x {
         n if n < 0.0 => -n,
@@ -71,48 +87,34 @@ fn abs(x: f32) -> f32 {
     result
 }
 
-fn powf(x: f32, y: f32) -> f32 {
-    if y == 0.0 {
-        // Anything raised to the power of 0 is 1
+/// exp by squares calculates x^n
+fn powf(x: f32, n: f32) -> f32 {
+    if n == 0.0 {
         return 1.0;
-    } else if y == 1.0 {
-        // Anything raised to the power of 1 is itself
-        return x;
-    } else if y.is_infinite() {
-        // Handle infinite y
-        return if x == 1.0 { 1.0 } else { 0.0 };
-    } else if x == 0.0 {
-        // Handle x == 0
-        return 0.0;
+    }
+    if n < 0.0 {
+        return 1.0 / powf(x, -n);
     }
 
     let mut result = 1.0;
-    let mut exp = abs(y) as u32;
-
     let mut base = x;
+    let mut exponent = n;
 
-    while exp > 0 {
-        if exp % 2 == 1 {
-            // If exp is odd, multiply the result by the base
+    while exponent > 0.0 {
+        if exponent % 2.0 == 1.0 {
             result *= base;
         }
-        // Square the base and halve the exponent
         base *= base;
-        exp /= 2;
+        exponent /= 2.0;
     }
-
-    if y < 0.0 {
-        // If y is negative, take the reciprocal of the result
-        result = 1.0 / result;
-    }
-
     result
 }
 
+/// Guest main runs the regression
 pub fn main() {
     let mut lr = LinearRegression::new();
     //assumes a single column stream of interleaved data i.e. (x,y,x,y...etc), 1200 is length of data
-    let training_data = (0..1200).map(|_| (env::read(), env::read()));
+    let training_data = (0..1199).map(|_| (env::read(), env::read()));
     training_data.for_each(|(x, y)| lr.train(x, y));
     let cycles = env::get_cycle_count();
     let result = (lr.intercept, lr.slope, cycles);
