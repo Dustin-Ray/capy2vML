@@ -41,8 +41,8 @@ impl LinearRegression {
         self.sum_xy += x * y;
 
         // Calculate the slope and intercept using the least squares method
-        self.slope = (self.n as f32 * self.sum_xy - self.sum_x * self.sum_y) + laplace_mechanism(2.0, self.n as f32, self.slope) as f32
-            / (self.n as f32 * self.sum_x_squared - self.sum_x * self.sum_x) + laplace_mechanism(2.0, self.n as f32, self.slope) as f32;
+        self.slope = (self.n as f32 * self.sum_xy - self.sum_x * self.sum_y) 
+            / (self.n as f32 * self.sum_x_squared - self.sum_x * self.sum_x);
 
         // β = ( ̃y −  ̃α ̃x) + L3
         // NoisyStats for DP Model
@@ -60,7 +60,7 @@ impl LinearRegression {
 /// * b: location paramter of distribution
 fn laplace_noise(x: f32, b: f32) -> f32 {
     let exponent = abs(x / b);
-    (1.0 / 2.0 * b) * powf(2.7182817_f32, -exponent)
+    (1.0 / 2.0 * b) * powf(2.71828182845904523536028747135266250f32, -exponent)
 }
 
 /// Additive noise mechanism using laplace distribution
