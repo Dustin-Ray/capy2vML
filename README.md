@@ -4,6 +4,27 @@ This project conducts differentially-private machine learning, ultimately produc
 
 To better understand the concepts behind this template, check out the [Structure of a zkVM Application] explainer.
 
+## Getting Started
+
+First, [install Rust][install-rust] if you don't already have it, then install the `cargo risczero` tool:
+
+```
+cargo install cargo-risczero
+```
+
+For the above commands to build successfully you will need to have installed the
+required dependencies. On a Ubuntu system you can install them with:
+
+```bash
+sudo apt install curl build-essential libssl-dev pkgconf
+```
+
+Next we'll need to install the `risc0` toolchain with:
+
+```
+cargo risczero install
+```
+
 ## Quick Start
 
 First, make sure [rustup](https://rustup.rs) is installed. This project uses a [nightly](https://doc.rust-lang.org/book/appendix-07-nightly-rust.html) version of [Rust](https://doc.rust-lang.org/book/ch01-01-installation.html). The [`rust-toolchain`](rust-toolchain) file will be used by `cargo` to automatically install the correct version.
