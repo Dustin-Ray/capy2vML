@@ -1,3 +1,4 @@
+[install-rust]: https://doc.rust-lang.org/cargo/getting-started/installation.html
 # Computational Attestations of Polynomial Integrity Towards Verifiable Machine Learning
 
 This project conducts differentially-private machine learning, ultimately producing both a model which can be readily used in a MLaaS setting, and a quantum-secure, non-interactive cryptographic proof that the program was executed honestly. It is derived from the RISC-Zero starter template.
