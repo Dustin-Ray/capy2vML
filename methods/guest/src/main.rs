@@ -113,7 +113,7 @@ fn powf(x: f32, n: f32) -> f32 {
 pub fn main() {
     let mut lr = LinearRegression::new();
     //assumes a single column stream of interleaved data i.e. (x,y,x,y...etc), 1200 is length of data
-    let training_data = (0..12).map(|_| (env::read(), env::read()));
+    let training_data = (0..1200).map(|_| (env::read(), env::read()));
     training_data.for_each(|(x, y)| lr.train(x, y));
     let cycles = env::get_cycle_count();
     let result = (lr.slope, lr.intercept, cycles);
