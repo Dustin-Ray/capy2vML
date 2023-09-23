@@ -6,7 +6,9 @@ To better understand the concepts behind this template, check out the [Structure
 
 ## Getting Started
 
-First, [install Rust][install-rust] if you don't already have it, then install the `cargo risczero` tool:
+First, [install
+Rust][install-rust] if you don't already have it, then install the `cargo
+risczero` tool:
 
 ```
 cargo install cargo-risczero
