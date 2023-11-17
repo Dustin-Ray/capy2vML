@@ -40,10 +40,6 @@ DP Training Converges to Expected Model:
 
 ![dp_training](./img/dp_training.gif)
 
-
-## RISC-Zero Starter Template
-[main repository](http://www.github.com/risc0)
-
 ## Video Walkthrough
 [CAPY2vML DP-Training Codebase Walkthrough](https://www.youtube.com/watch?v=o1dhu7udVsc&list=PLhWN89QoP265Mo0ddRCYVGepb6k946-E1)
 
