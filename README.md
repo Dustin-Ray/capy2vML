@@ -7,23 +7,19 @@ To better understand the concepts behind this template, check out the [Structure
 
 ## Getting Started
 
-First, [install
-Rust][install-rust] if you don't already have it, then install the `cargo
-risczero` tool:
-
-```
-cargo install cargo-risczero
-```
-
-For the above commands to build successfully you will need to have installed the
-required dependencies. On a Ubuntu system you can install them with:
-
+Make sure you have the required dependencies:
 ```bash
 sudo apt install curl build-essential libssl-dev pkgconf
 ```
 
-Next we'll need to install the `risc0` toolchain with:
+[install
+Rust][install-rust] if you don't already have it, then install the `cargo
+risczero` tool:
+```
+cargo install cargo-risczero
+```
 
+Next we'll need to install the `risc0` toolchain with:
 ```
 cargo risczero install
 ```
