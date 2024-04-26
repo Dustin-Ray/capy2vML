@@ -34,6 +34,12 @@ The following command reads an (x,y) dataset from the csv included with this rep
 cargo run --release
 ```
 
+Or, if you have CUDA and a GPU available:
+```
+cargo run -F cuda --release
+```
+
+
 It processes the dataset into a vector, initializes the prover/guest, and commits the dataset to the guest environment. Following training, a "receipt" is produced which verifies the integrity of the computation. The receipt is zero-knowledge, and together with the differentially-private model, nothing is revealed about the training data.
 
 DP Training Converges to Expected Model:
