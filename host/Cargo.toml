@@ -4,10 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+methods = { path = "../methods" }
+risc0-zkvm = { version = "0.21.0", features = ["cuda"] }
+# risc0-zkvm = { version = "0.21.0" }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = "1.0"
 bytemuck = "1.14.0"
 csv = "1.2.2"
 error = "0.1.9"
 instant = "0.1.12"
-methods = { path = "../methods" }
-risc0-zkvm = { version = "0.18.0" }
-serde = "1.0"
+
+
+[features]
+cuda = ["risc0-zkvm/cuda"]

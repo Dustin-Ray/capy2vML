@@ -1,10 +1,12 @@
 #![no_main]
 // If you want to try std support, also update the guest Cargo.toml file
-#![no_std] // std support is experimental
+#![no_std]  // std support is experimental
 
-extern crate alloc;
+
 use risc0_zkvm::guest::env;
+
 risc0_zkvm::guest::entry!(main);
+
 
 /// Linear regression fits a line to a dataset such that OLS
 /// is minimized.
@@ -113,9 +115,9 @@ fn powf(x: f32, n: f32) -> f32 {
 pub fn main() {
     let mut lr = LinearRegression::new();
     //assumes a single column stream of interleaved data i.e. (x,y,x,y...etc), 1200 is length of data
-    let training_data = (0..1200).map(|_| (env::read(), env::read()));
+    let training_data = (0..175).map(|_| (env::read(), env::read()));
     training_data.for_each(|(x, y)| lr.train(x, y));
-    let cycles = env::get_cycle_count();
-    let result = (lr.slope, lr.intercept, cycles);
+    // let cycles = env::get_cycle_count();
+    let result = (lr.slope, lr.intercept);
     env::commit(&(result));
 }
