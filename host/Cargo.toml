@@ -5,8 +5,9 @@ edition = "2021"
 
 [dependencies]
 methods = { path = "../methods" }
-risc0-zkvm = { version = "0.21.0", features = ["cuda"] }
-# risc0-zkvm = { version = "0.21.0" }
+# I dont think you need this enabled, you can just run from command line
+# risc0-zkvm = { version = "0.21.0", features = ["cuda"] }
+risc0-zkvm = { version = "0.21.0" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = "1.0"
 bytemuck = "1.14.0"
