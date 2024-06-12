@@ -9,25 +9,25 @@ use risc0_zkvm::guest::env;
 
 risc0_zkvm::guest::entry!(main);
 const ARRAY_SIZE: usize = 6000;
-const SCALE_FACTOR: i32 = 100000;
+const SCALING_FACTOR: i64 = 100000;
 static BYTES: &[u8] = include_bytes_aligned!(32, "../src/bytes_scaled");
 
 /// Linear regression fits a line to a dataset such that OLS
 /// is minimized.
 struct LinearRegression {
-    slope: i32,
-    intercept: i32, 
-    n: i32,
-    sum_x: i32,
-    sum_y: i32,
-    sum_x_squared: i32,
-    sum_xy: i32,
+    slope: i64,
+    intercept: i64, 
+    n: i64,
+    sum_x: i64,
+    sum_y: i64,
+    sum_x_squared: i64,
+    sum_xy: i64,
 }
 
 // A type containing pairs of x,y coordinates. It exists as a wrapper
 // so that we can use a pointer-cast for super risky unsafe deserialization.
 struct DataPairs {
-    data: [(i32, i32); ARRAY_SIZE],
+    data: [(i64, i64); ARRAY_SIZE],
 }
 
 impl LinearRegression {
@@ -44,121 +44,119 @@ impl LinearRegression {
     }
 
     /// Trains the regression one coordinate pair at a time,
-    // /// accumulating the values in the struct fields
-    // fn train(&mut self, x: i32, y: i32) {
-    //     self.n += 1;
-    //     self.sum_x += x;
-    //     self.sum_y += y;
-    //     self.sum_x_squared += x * x;
-    //     self.sum_xy += x * y;
+    /// accumulating the values in the struct fields
+    fn train(&mut self, x: i64, y: i64) {
+        self.n += 1;
+        self.sum_x += x;
+        self.sum_y += y;
+        self.sum_x_squared += x * x;
+        self.sum_xy += x * y;
 
-    //     // Calculate the slope and intercept using the least squares method
+        // Calculate the slope and intercept using the least squares method
 
-    // let denominator = self.n * self.sum_x_squared - self.sum_x * self.sum_x;
-    // if denominator != 0 {
-    //     self.slope = (self.n * self.sum_xy - self.sum_x * self.sum_y) * SCALE_FACTOR / denominator;
-    // } else {
-    //     // Handle the case where denominator is zero
-    //     // Perhaps set slope to some default or error value
-    //     self.slope = 0;  // Example: default to 0 or consider other handling strategies
-    // }
-
-    //     // β = ( ̃y −  ̃α ̃x) + L3
-    //     // NoisyStats for DP Model
-    //     self.intercept = (self.sum_y - (self.slope * self.sum_x / SCALE_FACTOR)) / self.n + laplace_mechanism(2, self.n, self.slope);
-    // }
-
-    fn linear_regression(&self, data: &[(i32, i32)]) -> (i32, i32) {
-        let scale = SCALE_FACTOR; // scale factor for fixed-point precision
-        let n = ARRAY_SIZE as i32;
-    
-        let sum_x = data.iter().map(|(x, _)| x).sum::<i32>();
-        let sum_y = data.iter().map(|(_, y)| y).sum::<i32>();
-        let sum_xy = data.iter().map(|(x, y)| x * y).sum::<i32>();
-        let sum_x2 = data.iter().map(|(x, _)| x.pow(2)).sum::<i32>();
-    
-        let numerator = n * sum_xy - sum_x * sum_y;
-        let denominator = n * sum_x2 - sum_x.pow(2);
-    
-        // Scale down the slope and intercept to account for fixed-point arithmetic
-        let m = (numerator * scale) / denominator;
-        let b = (sum_y - m * sum_x) / n;
-    
-        (m, b)
+        if self.n > 1 {
+            let numerator = self.n * self.sum_xy - self.sum_x * self.sum_y;
+            let denominator = self.n * self.sum_x_squared - self.sum_x * self.sum_x;
+            self.slope = numerator / denominator;
+        }
+        // β = ( ̃y −  ̃α ̃x) + L3
+        // NoisyStats for DP Model
+        let intercept_numerator = self.sum_y - self.slope * self.sum_x;
+        self.intercept = (intercept_numerator / self.n) + laplace_mechanism(2 * SCALING_FACTOR, self.n, self.slope);
+        self.intercept /= SCALING_FACTOR;
     }
 
-    // fn predict(&self, x: i32) -> i32 {
+    // fn linear_regression(&self, data: &[(i64, i64)]) -> (i64, i64) {
+    //     let scale = SCALE_FACTOR; // scale factor for fixed-point precision
+    //     let n = ARRAY_SIZE as i64;
+    
+    //     let sum_x = data.iter().map(|(x, _)| x).sum::<i64>();
+    //     let sum_y = data.iter().map(|(_, y)| y).sum::<i64>();
+    //     let sum_xy = data.iter().map(|(x, y)| x * y).sum::<i64>();
+    //     let sum_x2 = data.iter().map(|(x, _)| x.pow(2)).sum::<i64>();
+    
+    //     let numerator = n * sum_xy - sum_x * sum_y;
+    //     let denominator = n * sum_x2 - sum_x.pow(2);
+    
+    //     // Scale down the slope and intercept to account for fixed-point arithmetic
+    //     let m = (numerator * scale) / denominator;
+    //     let b = (sum_y - m * sum_x) / n;
+    
+    //     (m, b)
+    // }
+
+    // fn predict(&self, x: i64) -> i64 {
     //     self.slope * x + self.intercept
     // }
 }
 
 
 
-// /// Additive noise mechanism using laplace distribution
-// /// ## Arguments:
-// /// * epsilon: privacy paramter of mechanism, a good default value is 2
-// /// * n: size of dataset
-// /// * alpha: slope of regression to perturb
-// /// ## Returns:
-// /// * perturbed additive noise value
-// fn laplace_mechanism(epsilon: i32, n: i32, alpha: i32) -> i32 {
-//     let delta = SCALE_FACTOR - (SCALE_FACTOR / n);
-//     let l = laplace_noise(0, (3 * delta) * SCALE_FACTOR / epsilon);
-//     let delta_3 = (SCALE_FACTOR / n) * (1 + (abs(alpha) + l));
-//     laplace_noise(0, 3 * delta_3 / epsilon)
-// }
+/// Additive noise mechanism using laplace distribution
+/// ## Arguments:
+/// * epsilon: privacy paramter of mechanism, a good default value is 2
+/// * n: size of dataset
+/// * alpha: slope of regression to perturb
+/// ## Returns:
+/// * perturbed additive noise value
+fn laplace_mechanism(epsilon: i64, n: i64, alpha: i64) -> i64 {
+    let delta = SCALING_FACTOR - (SCALING_FACTOR / n);
+    let l = laplace_noise(0, (3 * delta) / epsilon);
 
-// /// Forms a laplace distribution
-// /// ## Arguments:
-// /// * x: mean of distribution
-// /// * b: location paramter of distribution
-// fn laplace_noise(x: i32, b: i32) -> i32 {
+    let delta_3 = (SCALING_FACTOR / n) * (SCALING_FACTOR + (abs(alpha) + l) / SCALING_FACTOR);
+    laplace_noise(0, 3 * delta_3 / epsilon)
+}
 
-//     if b == 0 {
-//         // Handle division by zero or return a default error value or notification
-//         return 0; // Example: return zero or an appropriate error code
-//     }
+/// Forms a laplace distribution
+/// ## Arguments:
+/// * x: mean of distribution
+/// * b: location paramter of distribution
+fn laplace_noise(x: i64, b: i64) -> i64 {
+    if b == 0 {
+        return 0; // Avoid division by zero by returning zero noise.
+    }
 
-//     let exponent = abs(x / b);
-//     // Ensure that b is not zero before division
-//     // Also adjust the order of operations to avoid premature integer division result of zero
-//     let base_scale = SCALE_FACTOR; // Scale to prevent integer division issues
-//     let pow_result = powf(271828182i32, -exponent); // Calculate the exponential decay
+    let x = x;
+    let b = b;
+    let exponent = abs(x * SCALING_FACTOR / b);
+    let exp_result = powf_fixed(271828, -exponent / SCALING_FACTOR); // Euler's number approximated as 2.71828 * SCALING_FACTOR
+    let result = (SCALING_FACTOR / 2 * b * exp_result) / SCALING_FACTOR;
+    if !(i64::MIN..=i64::MAX).contains(&result) {
+        panic!("Result out of i64 range");
+    }
 
-//     // Adjust the multiplication and division to account for the scaling factor
-//     (base_scale / (2 * b)) * pow_result / base_scale
-// }
+    result
+}
 
 
 
-// /// Calculates |x|
-// fn abs(x: i32) -> i32 {
-//     x & 0x7fffffff
-// }
+/// Calculates |x|
+fn abs(x: i64) -> i64 {
+    x & 0x7fffffff
+}
 
-// /// exp by squares calculates x^n
+/// exp by squares calculates x^n
+fn powf_fixed(x: i64, n: i64) -> i64 {
+    if n == 0 {
+        return SCALING_FACTOR; // 1.0 in fixed-point
+    }
+    if n < 0 {
+        return SCALING_FACTOR / powf_fixed(x, -n); // Inverting for negative exponent
+    }
 
-// fn powf(x: i32, n: i32) -> i32 {
-//     if n == 0 {
-//         return SCALE_FACTOR; // Equivalent to 1 in scaled terms
-//     }
-//     if n < 0 {
-//         return SCALE_FACTOR / powf(x, -n); // Handling for negative exponent
-//     }
+    let mut result = SCALING_FACTOR; // Start with 1.0 in fixed-point
+    let mut base = x;
+    let mut exponent = n;
 
-//     let mut result = SCALE_FACTOR; // Scaled 1 for fixed-point arithmetic
-//     let mut base = x;
-//     let mut exponent = n;
-
-//     while exponent > 0 {
-//         if exponent % 2 == 1 {
-//             result = result * base / SCALE_FACTOR; // Scale back down after multiplication
-//         }
-//         base = base * base / SCALE_FACTOR; // Prevent overflow by scaling down each step
-//         exponent /= 2;
-//     }
-//     result
-// }
+    while exponent > 0 {
+        if exponent % 2 == 1 {
+            result = result * base / SCALING_FACTOR;
+        }
+        base = base * base / SCALING_FACTOR;
+        exponent /= 2;
+    }
+    result
+}
 
 /// Guest main runs the regression
 pub fn main() {
