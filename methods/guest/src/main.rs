@@ -8,9 +8,9 @@ use include_bytes_aligned::include_bytes_aligned;
 use risc0_zkvm::guest::env;
 
 risc0_zkvm::guest::entry!(main);
-const ARRAY_SIZE: usize = 6000;
-const SCALING_FACTOR: i64 = 100000;
-static BYTES: &[u8] = include_bytes_aligned!(32, "../src/bytes_scaled");
+const ARRAY_SIZE: usize = 140 * 10;
+const SCALING_FACTOR: i64 = 10000;
+static BYTES: &[u8] = include_bytes_aligned!(1024, "../src/bytes");
 
 /// Linear regression fits a line to a dataset such that OLS
 /// is minimized.
@@ -53,7 +53,6 @@ impl LinearRegression {
         self.sum_xy += x * y;
 
         // Calculate the slope and intercept using the least squares method
-
         if self.n > 1 {
             let numerator = self.n * self.sum_xy - self.sum_x * self.sum_y;
             let denominator = self.n * self.sum_x_squared - self.sum_x * self.sum_x;
@@ -63,34 +62,8 @@ impl LinearRegression {
         // NoisyStats for DP Model
         let intercept_numerator = self.sum_y - self.slope * self.sum_x;
         self.intercept = (intercept_numerator / self.n) + laplace_mechanism(2 * SCALING_FACTOR, self.n, self.slope);
-        self.intercept /= SCALING_FACTOR;
     }
-
-    // fn linear_regression(&self, data: &[(i64, i64)]) -> (i64, i64) {
-    //     let scale = SCALE_FACTOR; // scale factor for fixed-point precision
-    //     let n = ARRAY_SIZE as i64;
-    
-    //     let sum_x = data.iter().map(|(x, _)| x).sum::<i64>();
-    //     let sum_y = data.iter().map(|(_, y)| y).sum::<i64>();
-    //     let sum_xy = data.iter().map(|(x, y)| x * y).sum::<i64>();
-    //     let sum_x2 = data.iter().map(|(x, _)| x.pow(2)).sum::<i64>();
-    
-    //     let numerator = n * sum_xy - sum_x * sum_y;
-    //     let denominator = n * sum_x2 - sum_x.pow(2);
-    
-    //     // Scale down the slope and intercept to account for fixed-point arithmetic
-    //     let m = (numerator * scale) / denominator;
-    //     let b = (sum_y - m * sum_x) / n;
-    
-    //     (m, b)
-    // }
-
-    // fn predict(&self, x: i64) -> i64 {
-    //     self.slope * x + self.intercept
-    // }
 }
-
-
 
 /// Additive noise mechanism using laplace distribution
 /// ## Arguments:
@@ -102,7 +75,6 @@ impl LinearRegression {
 fn laplace_mechanism(epsilon: i64, n: i64, alpha: i64) -> i64 {
     let delta = SCALING_FACTOR - (SCALING_FACTOR / n);
     let l = laplace_noise(0, (3 * delta) / epsilon);
-
     let delta_3 = (SCALING_FACTOR / n) * (SCALING_FACTOR + (abs(alpha) + l) / SCALING_FACTOR);
     laplace_noise(0, 3 * delta_3 / epsilon)
 }
@@ -127,8 +99,6 @@ fn laplace_noise(x: i64, b: i64) -> i64 {
 
     result
 }
-
-
 
 /// Calculates |x|
 fn abs(x: i64) -> i64 {
@@ -160,12 +130,11 @@ fn powf_fixed(x: i64, n: i64) -> i64 {
 
 /// Guest main runs the regression
 pub fn main() {
-    let lr = LinearRegression::new();
+    let mut lr = LinearRegression::new();
     let training_data: &DataPairs = unsafe_deserialize(BYTES);
-    let (slope, intercept) = lr.linear_regression(&training_data.data);
-
-    let result = (slope, intercept);
-    env::commit(&(result));
+    training_data.data.iter().for_each(|&(x, y)| lr.train(x, y));
+    let result = (lr.slope, lr.intercept);
+    env::commit(&result);
 }
 
 // Pointer-cast to the data instead of safe deserialize. This is super risky and generally
